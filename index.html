@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knights and Portals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700&family=Roboto+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto Mono', monospace; /* Techy monospace font for body */
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right bottom, #2C3E50, #4A5668); /* Dark blue-gray gradient */
+            color: #ecf0f1; /* Light text color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 700px;
+            background: rgba(44, 62, 80, 0.95); /* Dark background with slight transparency */
+            padding: 40px; /* Increased padding */
+            border-radius: 20px; /* More rounded corners */
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4); /* Deeper, softer shadow */
+            text-align: center;
+            backdrop-filter: blur(10px); /* Stronger frosted glass effect */
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Subtle light border */
+        }
+        h1 {
+            font-family: 'Orbitron', sans-serif; /* Futuristic font for the title */
+            text-align: center;
+            color: #61DAFB; /* Bright cyan color */
+            margin-bottom: 25px;
+            font-weight: 700;
+            font-size: 3.2em; /* Larger title */
+            text-shadow: 0 0 15px rgba(97, 218, 251, 0.6); /* Cyan glow effect */
+            letter-spacing: 2px;
+        }
+        p {
+            color: #bdc3c7; /* Lighter grey for instructions */
+            margin-bottom: 25px;
+            line-height: 1.6;
+            font-size: 1.1em;
+        }
+        textarea {
+            font-family: 'Roboto Mono', monospace; /* Monospace font for input */
+            width: calc(100% - 24px); /* Adjust width for padding + border */
+            height: 180px; /* Taller textarea */
+            margin-bottom: 25px;
+            font-size: 1.05em;
+            padding: 12px;
+            border: 1px solid #555; /* Darker border */
+            border-radius: 10px; /* More rounded */
+            resize: vertical; /* Allow vertical resizing only */
+            background-color: #34495E; /* Dark editor-like background */
+            color: #E0E0E0; /* Light text color */
+            box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.3); /* Inner shadow for depth */
+            transition: all 0.3s ease;
+        }
+        textarea:focus {
+            border-color: #61DAFB; /* Cyan focus border */
+            box-shadow: 0 0 15px rgba(97, 218, 251, 0.4); /* Cyan glow on focus */
+            outline: none;
+        }
+        button {
+            background-color: #E74C3C; /* Red button (danger/action) */
+            color: white;
+            padding: 15px 30px; /* Larger button */
+            border: none;
+            border-radius: 12px; /* More rounded */
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3); /* Red button shadow */
+        }
+        button:hover {
+            background-color: #C0392B; /* Darker red on hover */
+            transform: translateY(-3px); /* More pronounced lift */
+            box-shadow: 0 8px 25px rgba(231, 76, 60, 0.4); /* Enhanced shadow on hover */
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 10px rgba(231, 76, 60, 0.2);
+        }
+        .output {
+            font-family: 'Roboto Mono', monospace; /* Monospace font for output */
+            margin-top: 35px;
+            font-size: 1.3em;
+            color: #A0D0FF; /* Light blue output text */
+            background-color: #263238; /* Even darker output background */
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #3b4d58; /* Darker border */
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.4); /* Inner shadow */
+            font-weight: 500;
+            white-space: pre-wrap; /* Preserve white-space and wrap */
+            word-wrap: break-word; /* Break long words */
+        }
+        .output.error {
+            color: #FF6B6B; /* Bright red for errors */
+            background-color: rgba(255, 107, 107, 0.15); /* Light red background for error */
+            border: 1px solid #FF6B6B; /* Red border */
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Knights and Portals</h1>
+        <p>Enter a grid (0 for empty cells, 1 for obstacles), row by row. Separate rows with new lines:</p>
+        <textarea id="gridInput" placeholder="Example:\n0 1 0 0\n0 1 0 1\n0 0 0 0\n1 1 1 0"></textarea>
+        <button onclick="findShortestPath()">Find Shortest Path</button>
+        <div class="output" id="output"></div>
+    </div>
+
+    <script>
+        function parseGrid(input) {
+            const rows = input.trim().split('\n').map(row => row.trim().split(' ').map(Number));
+            // Basic validation for grid structure
+            if (rows.length === 0 || rows[0].length === 0) {
+                throw new Error("Grid cannot be empty.");
+            }
+            const numCols = rows[0].length;
+            if (!rows.every(row => row.length === numCols && row.every(cell => cell === 0 || cell === 1))) {
+                throw new Error("Invalid grid format. All rows must have the same length and contain only 0s (empty) or 1s (obstacles).");
+            }
+            return rows;
+        }
+
+        function isValid(x, y, grid) {
+            return x >= 0 && x < grid.length && y >= 0 && y < grid[0].length && grid[x][y] === 0;
+        }
+
+        function findShortestPath() {
+            const input = document.getElementById('gridInput').value;
+            const outputElement = document.getElementById('output');
+            outputElement.classList.remove('error'); // Clear previous error state
+            outputElement.innerText = ''; // Clear previous output
+
+            let grid;
+            try {
+                grid = parseGrid(input);
+            } catch (e) {
+                outputElement.innerHTML = `<span class="error">${e.message}</span>`;
+                outputElement.classList.add('error');
+                return;
+            }
+
+            const rows = grid.length;
+            const cols = grid[0].length;
+            const directions = [[0, 1], [1, 0], [0, -1], [-1, 0]]; // Standard 4-directional moves
+
+            // If start or end is an obstacle, no path is possible
+            if (grid[0][0] === 1 || grid[rows - 1][cols - 1] === 1) {
+                outputElement.innerHTML = `<span class="error">Start or end cell is an obstacle. No path possible.</span>`;
+                outputElement.classList.add('error');
+                return;
+            }
+
+            const emptyCells = [];
+            // Collect all empty cells for teleportation
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (grid[r][c] === 0) {
+                        emptyCells.push([r, c]);
+                    }
+                }
+            }
+
+            // Queue for BFS: [x, y, teleported_used, steps]
+            const queue = [[0, 0, false, 0]];
+            // Visited set: "x,y,teleported_status"
+            const visited = new Set(["0,0,false"]);
+
+            while (queue.length > 0) {
+                const [x, y, teleported, steps] = queue.shift();
+
+                // If target reached
+                if (x === rows - 1 && y === cols - 1) {
+                    outputElement.innerText = `Shortest path: ${steps} steps.`;
+                    return;
+                }
+
+                // Explore 4-directional neighbors
+                for (const [dx, dy] of directions) {
+                    const nx = x + dx;
+                    const ny = y + dy;
+                    const stateKey = `${nx},${ny},${teleported}`;
+
+                    if (isValid(nx, ny, grid) && !visited.has(stateKey)) {
+                        visited.add(stateKey);
+                        queue.push([nx, ny, teleported, steps + 1]);
+                    }
+                }
+
+                // Use teleportation if not used yet
+                if (!teleported) {
+                    for (const [tx, ty] of emptyCells) {
+                        // Cannot teleport to the current cell
+                        if (tx === x && ty === y) continue;
+
+                        const teleportStateKey = `${tx},${ty},true`;
+                        if (!visited.has(teleportStateKey)) {
+                            visited.add(teleportStateKey);
+                            queue.push([tx, ty, true, steps + 1]); // Teleportation costs 1 step
+                        }
+                    }
+                }
+            }
+
+            outputElement.innerHTML = `<span class="error">No path found to the destination.</span>`;
+            outputElement.classList.add('error');
+        }
+    </script>
+</body>
+</html>
